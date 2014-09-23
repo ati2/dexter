@@ -101,17 +101,11 @@ function analyst_clean_text($body){
 		while($row=$results->fetch_assoc()){
 			echo $row['word']."<br>"."\n";
 		}
-/*		
-		if ($stmt = $db->prepare($querystring)) {
-			$stmt->execute();
-			$stmt->bind_result($queryresult);
-			$stmt->fetch();
-			echo $queryresult;
-			$stmt->close();
-		}
-*/
 	}
 	function db_log_title_into_db($db,$title){
-
+		$title=$db->real_escape_string($title);
+		$title=str_replace(' ','+',$title);
+		$querystring="INSERT into words (word) values('{$title}')";
+		$db->query($querystring);
 	}
 ?>
