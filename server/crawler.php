@@ -5,20 +5,23 @@
 	-in final, will crawl pages
 	-pass urls to analyst.php
 */
+require 'configs.php';
 require 'logger.php';
-crawler_get_urls('../docs/testfiles');
+$root=config_root();
+crawler_get_urls($root,'../docs/testfiles');
 
 
 
 
 
-function crawler_get_urls($dir){
+function crawler_get_urls($root,$dir){
 	//directory is just for testing. will make a self growing model. 
 	$testdocs=scandir($dir);
 	logger('crawler','found '.count($testdocs).' items',0);
 	foreach($testdocs AS $doc){
-		$doc='../docs/testfiles/'.$doc;
+		$doc=$root.'docs/testfiles/'.$doc;
 		if(!crawler_validate_url($doc)){ continue; }
+		echo $doc;
 		crawler_analyze_page($doc);
 	}
 }
@@ -32,6 +35,12 @@ function crawler_validate_url($address){
 
 function crawler_analyze_page($address){
 	//will change this to an async that doesnt wait for response. 
-	file_get_contents('analyst.php?address='.$address); 
+	logger('crawler','loaded page',0);
+/*	the following works. cant use file_get_contents cause it doesnt run the php.
+	ob_start();
+	include('analyst.php');
+	$returned = ob_get_contents();
+	ob_end_clean();
+	*/
 }
 ?>
