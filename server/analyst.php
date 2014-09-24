@@ -16,8 +16,9 @@ function init(){
 
 	//database calls
 	$db=db_connect();
-	db_check_for_linkages($db,format_list_for_db_search($article['keywords']));
-	db_log_title_into_db($db,$article['title']);
+	$article['links']=db_check_for_linkages($db,format_list_for_db_search($article['keywords']));
+	$article['title']=db_log_title_into_db($db,$article['title']);
+	db_log_linkages($db,$article);
 	$db->close();
 }init();
 
@@ -29,6 +30,7 @@ function analyst_visit(){
 	
 	logger('analyst','visiting '.$address,0);
 	$raw=file_get_contents($address);
+	if(!$raw){ exit();}
 	$starttitle=strpos($raw,'>',stripos($raw,'dir="auto"'))+1;
 	$endtitle=strpos($raw,'</span',$starttitle);
 	$title=strtolower(substr($raw,$starttitle,$endtitle-$starttitle));
@@ -59,7 +61,7 @@ function analyst_clean_text($body){
 			$keyword=substr($keyword,$startpos,$endpos-$startpos);
 			if(strpos($keyword,'<img')!==false){continue;}
 			$keyword=analyst_clean_text($keyword);
-			
+			$keyword=str_replace(' ','+',$keyword);
 			if(strlen($keyword)){array_push($important_keywords,$keyword);}
 		}
 		return $important_keywords;
@@ -71,7 +73,6 @@ function analyst_clean_text($body){
 		function format_list_for_weight($list){
 			$counts=array_count_values($list);
 			arsort($counts);
-			$counts=http_build_query($counts,'','|');
 			return $counts;		
 		}
 	function dumb_strip_useless_words($contextual_body){
@@ -96,16 +97,44 @@ function analyst_clean_text($body){
 		$keywords_as_string="'".str_replace(",","','",$keywords_as_string)."'";
 		$querystring="SELECT word FROM words WHERE word in ({$keywords_as_string});";
 		
+		$matches=array();
 		$results=$db->query($querystring);
-		echo '<b>matching db words</b><br>'."\n";
 		while($row=$results->fetch_assoc()){
-			echo $row['word']."<br>"."\n";
+			array_push($matches,$row['word']);
+		}
+		return $matches;
+	}
+	function db_log_linkages($db,$article){
+		if(!$article['title']){ logger('analyst','no title for linkage',1);}
+		if(!count($article['links'])){ logger('analyst','no matches for linkage',1);}
+		$weights=format_list_for_weight($article['keywords']);
+		$sqlvalue=array();
+		foreach($article['links'] as $link){
+			array_push($sqlvalue,"('{$article['title']}','{$link}',{$weights[$link]})");
+		}
+		logger('analyst','found '.count($sqlvalue).' links',0);
+		$sqlvalue=implode(',',$sqlvalue);
+		$querystring="INSERT INTO links (word_from,word_to,weight) VALUES {$sqlvalue} ON DUPLICATE KEY UPDATE weight=VALUES(weight)";
+		$db->query($querystring);
+		if(mysqli_error($db)){
+			logger('analyst',mysqli_error($db),1);
+		}else{
+			logger('analyst','affected '.$db->affected_rows.' rows',0);
 		}
 	}
 	function db_log_title_into_db($db,$title){
-		$title=$db->real_escape_string($title);
-		$title=str_replace(' ','+',$title);
+		$title=db_clean_title($db,$title);
+		logger('analyst','logging '.$title.' into db',0);
 		$querystring="INSERT into words (word) values('{$title}')";
 		$db->query($querystring);
+		if(mysqli_error($db)){
+			logger('analyst',mysqli_error($db),0);
+		}
+		return $title;
 	}
+		function db_clean_title($db,$title){
+			$title=$db->real_escape_string($title);
+			$title=str_replace(' ','+',$title);
+			return $title;
+		}
 ?>
