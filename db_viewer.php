@@ -9,7 +9,7 @@
 	<div class='section' id='interface'>
 		<div id='title'>Dexter</div>	
 	</div>
-
+	<div id="background"></div>
 	<script src="client_src/js/d3.js"></script>
 	<script src="client_src/js/d3map.js"></script>
 </body>

@@ -3,6 +3,13 @@
 		height:100%;
 		width:100%;
 	} 
+		#background{
+			position:absolute;
+			height:100%;
+			width:100%;
+			top:0;
+			left:0;
+		}
 		input,select{
 			margin:5px;
 			padding:5px;

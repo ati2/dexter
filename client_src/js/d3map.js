@@ -25,8 +25,8 @@ function initD3(links){
 	});
 	console.log(links);
 	
-	var width = 960,
-		height = 500;
+	var width = window.innerWidth,
+		height = window.innerHeight;
 
 	var force = d3.layout.force()
 		.nodes(d3.values(nodes))
@@ -37,11 +37,20 @@ function initD3(links){
 		.on("tick", tick)
 		.start();
 
-	var svg = d3.select("body").append("svg")
+	var svg = d3.select("#background").append("svg:svg")
 		.attr("width", width)
-		.attr("height", height);
+		.attr("height", height)
+		.call(d3.behavior.zoom().on("zoom", redraw));
 		
-	svg.append("defs").selectAll("marker")
+	var vis = svg.append('g');
+
+	function redraw() {
+		vis.attr("transform",
+				 "translate(" + d3.event.translate + ")"
+				 + " scale(" + d3.event.scale + ")");
+	}
+		
+	vis.append("defs").selectAll("marker")
 		.data(["suit", "licensing", "resolved"])
 		.enter().append("marker")
 		.attr("id", function(d) { return d; })
@@ -54,19 +63,19 @@ function initD3(links){
 		.append("path")
 		.attr("d", "M0,-5L10,0L0,5");
 		
-	var path = svg.append("g").selectAll("path")
+	var path = vis.append("svg:g").selectAll("path")
 		.data(force.links())
 		.enter().append("path")
 		.attr("class", function(d) { return "link " + d.type; })
 		.attr("marker-end", function(d) { return "url(#"+ d.type + ")"; });
 
-	var circle = svg.append("g").selectAll("circle")
+	var circle = vis.append("svg:g").selectAll("circle")
 		.data(force.nodes())
 		.enter().append("circle")
 		.attr("r", 6)
 		.call(force.drag);
 
-	var text = svg.append("g").selectAll("text")
+	var text = vis.append("svg:g").selectAll("text")
 		.data(force.nodes())
 		.enter().append("text")
 		.attr("x", 8)
