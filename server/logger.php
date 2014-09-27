@@ -8,5 +8,8 @@ function logger($from,$error,$importance){
 		$msg=$importance.'-'.$from.' says '.$error;
 		echo "<div id='serverlog'>{$msg}</div>";
 	}
+	if($importance==1){
+		exit("lvl {$importance} error. stopped");
+	}
 }
 ?>

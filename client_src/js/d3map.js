@@ -32,7 +32,7 @@ function initD3(links){
 		.nodes(d3.values(nodes))
 		.links(links)
 		.size([width, height])
-		.linkDistance(200)
+		.linkDistance(100)
 		.charge(-300)
 		.on("tick", tick)
 		.start();

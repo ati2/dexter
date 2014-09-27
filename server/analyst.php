@@ -10,7 +10,8 @@ require 'configs.php';
 
 function init(){
 	//processing calls
-	$article=analyst_visit();
+	$params=get_vars_from_input($_GET['address']);
+	$article=analyst_visit($params);
 	$article['body']=analyst_clean_text($article['body']);
 	$article['keywords']=list_links_as_important($article['raw']);
 
@@ -19,25 +20,44 @@ function init(){
 	$article['links']=db_check_for_linkages($db,format_list_for_db_search($article['keywords']));
 	$article['title']=db_log_title_into_db($db,$article['title']);
 	db_log_linkages($db,$article);
+	
+	//double check your work
+	db_clean_linkages($db);
+	
 	$db->close();
 }init();
 
 
+/* *************************************************************** *\
+	get_vars_from_input(url)
+		
+	based on url, determines if source is debug/interface/robot. 
+	inits params with defaults accordingly
+\* *************************************************************** */
+function get_vars_from_input($debug_mode){
+	$params=array();
+	$params['address']=($debug_mode)?$_GET['address']:$_POST['address'];
+	$params['max']=($debug_mode)?10:$_POST['max'];
+	$params['depth']=($debug_mode)?1:$_POST['depth'];
+	$params['debug']=($debug_mode)?1:$_POST['debug'];
+	$params['type']=($debug_mode)?'wikipedia':$_POST['type'];
+	$params['mode']=($debug_mode)?'debug':'interface';
+	return $params;
+}
 
-function analyst_visit(){
-	$address=$_GET['address'];
-	if(!$address){ return; }
+
+function analyst_visit($params){
+	if(!$params['address']){ return; }
 	
-	logger('analyst','visiting '.$address,0);
-	$raw=file_get_contents($address);
+	logger('analyst','visiting '.$params['address'],0);
+	$raw=file_get_contents($params['address']);
 	if(!$raw){ exit();}
 	$starttitle=strpos($raw,'>',stripos($raw,'dir="auto"'))+1;
 	$endtitle=strpos($raw,'</span',$starttitle);
 	$title=strtolower(substr($raw,$starttitle,$endtitle-$starttitle));
 	
-	
 	$startbody=stripos($raw,'>',strpos($raw,'mw-content-text'))+1;
-	$endbody=stripos($raw,'<span',(strpos($raw,'id="See_also"')-30));
+	$endbody=(strpos($raw,'id="See_also"'))?strpos($raw,'id="See_also'):strpos($raw,'id="References"');
 	$body=substr($raw,$startbody,$endbody-$startbody);
 	//only return the body
 	return array('title'=>$title,'body'=>$body,'raw'=>$body);
@@ -136,5 +156,23 @@ function analyst_clean_text($body){
 			$title=$db->real_escape_string($title);
 			$title=str_replace(' ','+',$title);
 			return $title;
+		}
+	function db_clean_linkages($db){
+	
+	}
+		function db_get_one_sided_links($db){
+			$sql='SELECT * 
+				FROM (SELECT word_from AS a , word_to AS b FROM `links`) AS reversed 
+				LEFT JOIN links  
+				ON reversed.b=links.word_from AND reversed.a=links.word_to 
+				WHERE  ISNULL(weight)';
+		}
+		function db_clean_one_sided_links($db){
+			$sql='INSERT INTO `links` (word_from,word_to,weight)
+				SELECT b,a,0 
+				FROM (SELECT word_from AS a , word_to AS b FROM `links`) AS reversed 
+				LEFT JOIN links  
+				ON reversed.b=links.word_from AND reversed.a=links.word_to 
+				WHERE  ISNULL(weight)';
 		}
 ?>

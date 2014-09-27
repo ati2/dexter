@@ -3,17 +3,32 @@
 <head>
 	<title>dexter</title>
 	<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300" rel="stylesheet" type="text/css">	
-	
-	<style> body{font-family: 'Source Sans Pro', sans serif; margin:30px;} </style>
+	<link href="client_src/structure.css" rel="stylesheet" type="text/css">	
 </head>
-<body>
-	<h1>Dexter</h1>
-	<ul>
-		<a href="server/crawler.php"><li>this page runs through the file dir and calls the analyst</li></a>
-		<a href="server/analyst.php"><li>analyst reads 1 page and links it to the database<br>
-		(dont actually go to this one. crawler calls with and passes data into it)
-		</li></a>
-		<a href="db_viewer.php"><li>shows the state of the database</li></a>
-	</ul>
+<body class="centerwrapper">
+	<div class='section' id='interface'>
+		<div id='title'>Dexter</div>	
+		
+		<form id='interfaceform'><span>Crawler Interface</span><br>
+			<input type='text' style='width:400px' placeholder='subject' name='subject' id='subject'><br>
+			<input type='text' style='width:45px;' value='10' name='max' id='max'> max links per page (~ 100)<br>
+			<select name='depth' id='depth'><option>1</option></select> search depth (grows at a factor of number_of_links^n) <br>
+			<select name='debug' id='debug'>
+				<option>0</option>
+				<option>1</option>
+			</select> feedback level (debugging threshold)<br>
+			<select name='pagetype' id='pagetype'>
+				<option>wikipedia</option>
+			</select> content type<br>
+			<input type='submit' value='explore'>	
+			<div id='log' >
+				<a href="http://localhost/db_viewer.php">view db as graph</a>
+			</div>
+		</form>
+		
+	</div>
+	
+	<script src="client_src/js/jquery.1.6.1.js"></script>
+	<script src="client_src/js/form.js"></script>
 </body>
 </html>
